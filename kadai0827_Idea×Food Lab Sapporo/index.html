@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="css/style.css">
+  <title>chatApp</title>
+
+</head>
+
+<body>
+
+  <div class="main">
+    <h1 class="title">Idea×Food Lab Sapporo</h1>
+    <img src="images/honey_festival-1024x683.jpeg" width="1450px" height="500px" class="image" alt="背景画像">
+  </div>
+  <!-- 入力場所を作成しよう -->
+
+
+  <div class="formblock">
+    <form class="form">
+      <fieldset class="fieldset">
+        <legend class="text_title">製造したい商品のアイディアを教えてください</legend>
+        <div>
+          商品名（仮） <input type="text" placeholder="焼き鳥弁当" id="name" class="text1">
+        </div>
+        <div>
+          商品原料 <input type="text" id="text" placeholder="鶏肉 米飯 タレ のり" class="text2">
+        </div>
+        <div>
+          希望ロット数 <input type="text" id="text2" placeholder="200個" class="text3">
+        </div>
+        <div>
+          商品レシピ <input type="text" id="text3" placeholder="写真掲載" class="text4">
+        </div>
+        <div>
+          <button type="button" id="send">投稿</button>
+        </div>
+      </fieldset>
+    </form>
+  </div>
+
+
+  <!-- データ出力場所 -->
+
+
+  <!-- 左の吹き出し -->
+  <div class="balloon-chat left">
+    <figure class="icon-img"><img src="images/job_chef_man.png" width="100px" height="100px" alt="料理人">
+      <figcaption class="icon-name">料理人</figcaption>
+    </figure>
+    <div class="chatting">
+      <p id="output" class="chat-text"></p>
+    </div>
+  </div>
+  <!-- 右の吹き出し -->
+  <div class="balloon-chat right">
+    <figure class="icon-img"><img src="images/job_syokuhin_koujou.png" width="100px" height="100px" alt="代替えテキスト">
+      <figcaption class="icon-name">製造会社</figcaption>
+    </figure>
+    <div class="chatting">
+      <p id="output2" class="chat-text"></p>
+    </div>
+  </div>
+
+
+
+  <div class="output_block">
+    <!-- <ul id="output"></ul> -->
+    <!-- <ul id="output2" class="output2"></ul> -->
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <!-- 以下にfirebaseのコードを貼り付けよう -->
+  <!-- The core Firebase JS SDK is always required and must be listed first -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase.js"></script>
+
+  <script>
+    // Your web app's Firebase configuration
+    var firebaseConfig = {
+      apiKey: "",
+      authDomain: "chat-cfb06.firebaseapp.com",
+      projectId: "chat-cfb06",
+      storageBucket: "chat-cfb06.appspot.com",
+      messagingSenderId: "306779820855",
+      appId: "1:306779820855:web:db0704bb7a87c29c7fc0b2"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
+  <script>
+    // 日時をいい感じの形式にする関数
+    function convertTimestampToDatetime(timestamp) {
+      const _d = timestamp ? new Date(timestamp * 1000) : new Date();
+      const Y = _d.getFullYear();
+      const m = (_d.getMonth() + 1).toString().padStart(2, '0');
+      const d = _d.getDate().toString().padStart(2, '0');
+      const H = _d.getHours().toString().padStart(2, '0');
+      const i = _d.getMinutes().toString().padStart(2, '0');
+      const s = _d.getSeconds().toString().padStart(2, '0');
+      return `${Y}/${m}/${d} ${H}:${i}:${s}`;
+    }
+
+
+    const db = firebase.firestore().collection('chat');
+
+    // chatapp.html
+
+    $('#send').on('click', function () {
+      const data = {
+        name: $('#name').val(),
+        text: $('#text').val(),
+        text2: $('#text2').val(),
+        text3: $('#text3').val(),
+        time: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      db.add(data);
+      $('#name').val('');
+      $('#text').val('');
+      $('#text2').val('');
+      $('#text3').val('');
+    });
+  
+    // 出力①
+    db.orderBy('time', 'desc').onSnapshot(function (querySnapshot) {
+      console.log(querySnapshot.docs);
+      // オンラインにデータが追加や変更した時に動作する処理
+
+      // 生データを扱いやすい形に変換する処理
+      const dataArray = [];
+      querySnapshot.docs.forEach(function (doc) {
+        const data = {
+          id: doc.id,
+          data: doc.data(),
+        };
+        dataArray.push(data);
+      });
+
+      console.log(dataArray);
+
+      // 省略
+      // 扱いやすいデータからタグを生成する処理
+      const tagArray = [];
+      dataArray.forEach(function (data) {
+        tagArray.push(`
+    <div id="${data.id}" class=chattext>
+      <ul>${data.data.name}</ul>
+      <ul>${data.data.text}</ul>
+      <ul>${data.data.text2}</ul>
+      <ul>${data.data.text3}</ul>
+      <ul>time:${convertTimestampToDatetime(data.data.time.seconds)}</ul>
+    </div>
+  `);
+      });
+      //画面にタグを出力する処理
+      $('#output').html(tagArray);
+
+    });
+
+    // 出力②
+    db2.orderBy('time', 'desc').onSnapshot(function (querySnapshot) {
+      console.log(querySnapshot.docs);
+      // オンラインにデータが追加や変更した時に動作する処理
+
+      // 生データを扱いやすい形に変換する処理
+      const dataArray = [];
+      querySnapshot.docs.forEach(function (doc) {
+        const data = {
+          id: doc.id,
+          data: doc.data(),
+        };
+        dataArray.push(data);
+      });
+
+      console.log(dataArray);
+
+      // 省略
+      // 扱いやすいデータからタグを生成する処理
+      const tagArray = [];
+      dataArray.forEach(function (data2) {
+        tagArray.push(`
+    <div id="${data2.id}">
+      <p>${data2.data.name} day: ${convertTimestampToDatetime(data2.data.time.seconds)}</p>
+      <p>${data2.data.text}</p>
+    </div>
+  `);
+      });
+      //画面にタグを出力する処理
+      $('#output2').html(tagArray);
+
+    });
+
+    // 認証処理
+    $(function () {
+      $("#signup-btn").on("click", function () {
+        const userName = $('#name').val();
+        const userMail = $('#email').val();
+        const userPass = $('#pass').val();
+        signUp(userMail, userPass);
+      });
+    });
+
+    //サインアップ処理
+    function signUp(email, password) {
+      firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          // Signed in
+          var user = userCredential.user;
+          console.log(user);
+          console.log("success!");
+          // ...
+        })
+        .catch((error) => {
+          var errorCode = error.code;
+          var errorMessage = error.message;
+          // ..
+        });
+    }
+  </script>
+</body>
+
+</html>
